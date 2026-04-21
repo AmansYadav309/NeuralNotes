@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: neuralnotes-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    rootDir: backend
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: FRONTEND_ORIGIN
+        value: "*" # Set this to your Vercel URL later for better security
+      - key: GOOGLE_CREDENTIALS_PATH
+        value: "./google-credentials.json"

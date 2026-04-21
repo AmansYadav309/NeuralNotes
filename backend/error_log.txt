@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "C:\react prog\SocraticStudy\backend\main.py", line 582, in export_gdoc
+    from google_auth_oauthlib.flow import Flow
+ModuleNotFoundError: No module named 'google_auth_oauthlib'
+Global error:
+Traceback (most recent call last):
+  File "C:\react prog\SocraticStudy\backend\main.py", line 582, in export_gdoc
+    from google_auth_oauthlib.flow import Flow
+ModuleNotFoundError: No module named 'google_auth_oauthlib'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\react prog\SocraticStudy\backend\main.py", line 586, in export_gdoc
+    raise HTTPException(status_code=500, detail="Google API client libraries not installed.")
+fastapi.exceptions.HTTPException: 500: Google API client libraries not installed.
