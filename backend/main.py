@@ -582,16 +582,26 @@ async def export_gdoc(req: ExportGDocRequest):
     except ImportError:
         raise HTTPException(status_code=500, detail="Google API client libraries not installed.")
 
-    creds_path = os.getenv("GOOGLE_CREDENTIALS_PATH", "./google-credentials.json")
-    if not os.path.exists(creds_path):
-        raise HTTPException(status_code=500, detail="Google credentials file not found.")
+    import json
+    google_creds_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
 
     try:
-        flow = Flow.from_client_secrets_file(
-            creds_path,
-            scopes=["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive.file"],
-            redirect_uri="postmessage"
-        )
+        if google_creds_json:
+            client_config = json.loads(google_creds_json)
+            flow = Flow.from_client_config(
+                client_config,
+                scopes=["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive.file"],
+                redirect_uri="postmessage"
+            )
+        else:
+            creds_path = os.getenv("GOOGLE_CREDENTIALS_PATH", "./google-credentials.json")
+            if not os.path.exists(creds_path):
+                raise HTTPException(status_code=500, detail="Google credentials not configured (neither GOOGLE_CREDENTIALS_JSON env nor google-credentials.json file found).")
+            flow = Flow.from_client_secrets_file(
+                creds_path,
+                scopes=["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive.file"],
+                redirect_uri="postmessage"
+            )
         flow.fetch_token(code=req.auth_code)
         creds = flow.credentials
     except Exception as e:

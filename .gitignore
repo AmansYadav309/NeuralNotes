@@ -53,3 +53,6 @@ tsc_errors.txt
 # =========================
 venv/
 __pycache__/
+
+backend/google-credentials.json
+.env
