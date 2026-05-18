@@ -6,7 +6,7 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     rootDir: backend
     envVars:
-      - key: OPENROUTER_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
       - key: FRONTEND_ORIGIN
         value: "*" # Set this to your Vercel URL later for better security

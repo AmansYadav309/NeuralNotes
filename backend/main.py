@@ -22,8 +22,11 @@ import httpx
 load_dotenv()
 
 # Environment variables
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:3000")
+
+from google import genai
+from google.genai import types
 
 app = FastAPI(title="NeuralNotes Backend", version="1.1.0")
 
@@ -45,8 +48,7 @@ app.add_middleware(
 _ensure_dirs()
 
 
-OPENROUTER_BASE = "https://openrouter.ai/api/v1"
-
+# Removed OPENROUTER_BASE
 class UploadResponse(BaseModel):
     num_pages: int
     pages: List[str]
@@ -134,41 +136,38 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     return UploadResponse(num_pages=len(pages_text), pages=pages_text, metadata=meta)
 
-async def _openrouter_chat(system_prompt: str, user_prompt: str, model: str = "google/gemini-2.0-flash-001") -> str:
-    if not OPENROUTER_API_KEY:
-        raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY not configured")
-    
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "HTTP-Referer": FRONTEND_ORIGIN,
-        "X-Title": "NeuralNotes"
-    }
-    
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-        "temperature": 0.3,
-        "max_tokens": 8192
-    }
-    
+
+gemini_client = None
+
+def get_gemini_client():
+    global gemini_client
+    if gemini_client is None:
+        if not GEMINI_API_KEY:
+            raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+    return gemini_client
+
+async def _openrouter_chat(system_prompt: str, user_prompt: str, model: str = "gemini-2.5-flash") -> str:
+    # Renamed to keep external method signatures in main.py, but actually calls Gemini Flash
+    client = get_gemini_client()
     try:
-        async with httpx.AsyncClient(timeout=120.0) as ac:
-            res = await ac.post(f"{OPENROUTER_BASE}/chat/completions", headers=headers, json=payload)
-            
-            if res.status_code == 429:
-                raise HTTPException(status_code=429, detail="AI Rate limit reached via OpenRouter. Please wait a moment.")
-            
-            res.raise_for_status()
-            data = res.json()
-            return data["choices"][0]["message"]["content"]
-    except httpx.HTTPStatusError as e:
-        error_info = e.response.text
-        raise HTTPException(status_code=e.response.status_code, detail=f"OpenRouter API error: {error_info}")
+        if "gemini" not in model:
+            model = "gemini-2.5-flash"
+
+        response = await client.aio.models.generate_content(
+            model=model,
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0.3
+            )
+        )
+        if response.text is None:
+             raise HTTPException(status_code=500, detail="Gemini returned empty response text")
+        return response.text
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to communicate with OpenRouter: {e}")
+        print(f"Gemini API Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to communicate with AI service: {str(e)}")
 
 @app.post("/summarize")
 async def summarize(req: SummarizeRequest):

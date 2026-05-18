@@ -21,7 +21,7 @@ This guide will walk you through deploying **NeuralNotes** to production.
         - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
         - **Root Directory**: `backend`
 4.  **Environment Variables**: Go to the "Environment" tab in Render and add:
-    - `OPENROUTER_API_KEY`: Your OpenRouter API key.
+    - `GEMINI_API_KEY`: Your Google Gemini API key.
     - `FRONTEND_ORIGIN`: Your Vercel frontend URL (e.g., `https://your-app.vercel.app`).
     - `GOOGLE_CREDENTIALS_PATH`: `./google-credentials.json` (Ensure this file is present or use a Secret File).
 
@@ -50,7 +50,7 @@ If you have a `google-credentials.json` file, you should upload it as a **Secret
 
 To ensure all features work, make sure you have configured the following:
 
-- **OpenRouter**: For LLM logic (Gemini 2.0 Flash).
+- **Gemini**: For LLM logic (Gemini Flash natively from Google).
 - **Firebase**: Update your Firebase config in the frontend code if you want to use your own database.
 - **Google Search/GenAI**: If using specific Vertex AI features.
 - **YouTube logic**: Ensure `FFmpeg` is available on the hosting environment (Render's Python environment usually has basic libraries, but you might need a [Render Buildpack](https://render.com/docs/native-runtimes#ffmpeg) if specific ffmpeg logic fails).
